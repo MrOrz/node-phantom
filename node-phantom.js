@@ -35,6 +35,7 @@ module.exports={
 			var exitCode=0;
 			phantom.on('exit',function(code){
 				exitCode=code;
+				// console.log('phantom process exit w/ code:', code);
 			});
 			setTimeout(function(){	//wait a bit to see if the spawning of phantomjs immediately fails due to bad path or similar
 				callback(exitCode!==0,phantom);
@@ -63,6 +64,14 @@ module.exports={
 				callback(true);
 				return;
 			}
+
+			phantom.on('exit', function(code, signal){
+				if(code !== 0){
+					console.error('[node-phantom] phantomJS child process exited with code ', code);
+					server.close();
+				}
+			});
+
 			var pages={};
 			var cmds={};
 			var cmdid=0;
@@ -179,6 +188,9 @@ module.exports={
 					var callback = callbackOrDummy(pages[id] ? pages[id][cmd] : undefined);
 					callback(unwrapArray(request[2]));
 				});
+				// socket.on('disconnect', function(){
+				// 	server.close();
+				// });
 				var proxy={
 					createPage:function(callback){
 						request(socket,[0,'createPage'],callbackOrDummy(callback));
